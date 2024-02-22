@@ -7,10 +7,15 @@ import "solmate/auth/Owned.sol";
 
 contract LivrNFT is ERC1155, Owned {
     
+  string public name;
+  string public symbol;
 
   mapping(uint => string) public tokenURI;
 
-  constructor() ERC1155() Owned(msg.sender) {}
+  constructor() ERC1155() Owned(msg.sender) {
+    name = "Streamlivr NFTs";
+    symbol = "SLN";
+  }
 
   function mint(address _to, uint _id, uint _amount) external {
     _mint(_to, _id, _amount, "");
