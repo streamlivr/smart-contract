@@ -1,6 +1,27 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+// Layout of Contract:
+// version
+// imports
+// interfaces, libraries, contracts
+// errors
+// Type declarations
+// State variables
+// Events
+// Modifiers
+// Functions
+
+// Layout of Functions:
+// constructor
+// receive function (if exists)
+// fallback function (if exists)
+// external
+// public
+// internal
+// private
+// view & pure functions
+
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -8,23 +29,50 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 
-contract LivrNFT is ERC1155, Ownable, ERC1155Pausable, ERC1155Supply {
+contract LivrTickets is ERC1155, Ownable, ERC1155Pausable, ERC1155Supply {
+
+  /////////////////////
+    // State variables //
+    /////////////////////
     
   string public name;
   string public symbol;
 
-  mapping(uint => string) public tokenURI;
+  mapping(uint => string) public s_tokenURI;
+
+
+  // Have a Ticket struct that holds the token id, the maxSupply to mint and price, creator address 
+  struct s_Ticket {
+    uint96 tokenId;
+    uint96 maxSupply;
+    uint96 price;
+    address creator;
+  }
+  
+  // Have a mapping that holds the struct
+  mapping(uint96 id => s_Ticket) public s_Tickets;
+
+  /////////////////////
+    // Functions       //
+    /////////////////////
 
   constructor() ERC1155("") Ownable(msg.sender) {
     name = "Streamlivr NFTs";
     symbol = "SLN";
   }
 
-  // Have a LivrNFT struct that holds the token id, the maxSupply to mint and price, creator address 
-  // Have a mapping that holds the struct
-  // Have a function that allows owners to add a new LivrNFT to the mapping
-  // Add support for supply tracking
 
+  ////////////////////////
+    // External Functions //
+    ///////////////////////
+
+
+  // Have a function that allows creators to add a new Ticket to the mapping
+  function addTicket(uint96 _id, uint96 _maxSupply, uint96 _price) external {
+
+    s_Ticket memory newLivrNFT = s_Ticket(_id, _maxSupply, _price, msg.sender);
+    s_Tickets[_id] = newLivrNFT;
+  }
 
   function mint(uint _id, uint _amount) external {
     
@@ -49,17 +97,22 @@ contract LivrNFT is ERC1155, Ownable, ERC1155Pausable, ERC1155Supply {
   }
 
   function setURI(uint _id, string memory _uri) external {
-    tokenURI[_id] = _uri;
+    s_tokenURI[_id] = _uri;
     emit URI(_uri, _id);
   }
 
   function uri(uint _id) public override view returns (string memory) {
-    return tokenURI[_id];
+    return s_tokenURI[_id];
   }
 
   function changeOwner(address newOwner) external onlyOwner {
     transferOwnership(newOwner);
   }
+
+
+  ////////////////////////
+    // Internal Functions //
+    ///////////////////////
 
   function pause() public onlyOwner {
         _pause();
