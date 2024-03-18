@@ -8,7 +8,7 @@ contract LivrToken is ERC20, Ownable {
 
     uint256 public constant MAX_SUPPLY = 1000000000 * 10 ** 18;
 
-    constructor(uint256 initialSupply) ERC20("StreamLivr", "SLT") Ownable(msg.sender) {
+    constructor(uint256 initialSupply) ERC20("StreamLivr", "STRV") Ownable(msg.sender) {
         _mint(msg.sender, initialSupply);
     }
 
@@ -16,4 +16,6 @@ contract LivrToken is ERC20, Ownable {
         require(totalSupply() + amount <= MAX_SUPPLY, "LivrToken: MAX_SUPPLY_EXCEEDED");
         _mint(to, amount);
     }
+
+    
 }

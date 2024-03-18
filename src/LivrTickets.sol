@@ -30,13 +30,19 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 
 contract LivrTickets is ERC1155, Ownable, ERC1155Pausable, ERC1155Supply {
+  /////////////////////
+  // Errors //
+  /////////////////////
+  error LivrTickets__NotAllowedToken();
+
 
   /////////////////////
     // State variables //
-    /////////////////////
+  /////////////////////
     
   string public name;
   string public symbol;
+  address public immutable i_tokenAddress;
 
   mapping(uint => string) public s_tokenURI;
 
@@ -52,13 +58,29 @@ contract LivrTickets is ERC1155, Ownable, ERC1155Pausable, ERC1155Supply {
   // Have a mapping that holds the struct
   mapping(uint96 id => s_Ticket) public s_Tickets;
 
+
+
+    /////////////////////
+    // Modifiers      ///
+    /////////////////////
+
+    modifier NotAllowedToken(address token) {
+        
+        if (token != address(i_tokenAddress)) {
+            revert LivrTickets__NotAllowedToken();
+        }
+        _;
+    }
+
+
   /////////////////////
     // Functions       //
     /////////////////////
 
-  constructor() ERC1155("") Ownable(msg.sender) {
+  constructor(address _tokenAddress) ERC1155("") Ownable(msg.sender) {
     name = "Streamlivr NFTs";
     symbol = "SLN";
+    i_tokenAddress = _tokenAddress;
   }
 
 
@@ -68,13 +90,13 @@ contract LivrTickets is ERC1155, Ownable, ERC1155Pausable, ERC1155Supply {
 
 
   // Have a function that allows creators to add a new Ticket to the mapping
-  function addTicket(uint96 _id, uint96 _maxSupply, uint96 _price) external {
+  function createTicket(uint96 _id, uint96 _maxSupply, uint96 _price) external {
 
     s_Ticket memory newLivrNFT = s_Ticket(_id, _maxSupply, _price, msg.sender);
     s_Tickets[_id] = newLivrNFT;
   }
 
-  function mint(uint _id, uint _amount) external {
+  function mint(uint _id, uint _amount) external payable {
     
     _mint(msg.sender, _id, _amount, "");
   }
