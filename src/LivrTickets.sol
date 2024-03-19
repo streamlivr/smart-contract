@@ -31,7 +31,7 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 
-contract LivrTickets is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC1155Supply {
+contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC1155Supply {
   /////////////////////
   // Errors //
   /////////////////////
