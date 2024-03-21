@@ -12,8 +12,8 @@ contract LivrToken is ERC20Burnable, Ownable {
 
     uint256 public constant MAX_SUPPLY = 1000000000 * 10 ** 18;
 
-    constructor(uint256 initialSupply) ERC20("StreamLivr", "STRV") Ownable(msg.sender) {
-        _mint(msg.sender, initialSupply);
+    constructor(uint256 initialSupply, address to) ERC20("StreamLivr", "STRV") Ownable(msg.sender) {
+        _mint(to, initialSupply);
     }
 
     function burn(uint256 _amount) public override onlyOwner {
