@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -29,7 +29,7 @@ contract LivrToken is ERC20Burnable, Ownable {
         super.burn(_amount);
     }
 
-    function mint (address _to, uint256 _amount) external onlyOwner returns (bool) {
+    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
         if (_to == address(0)) {
             revert LivrToken_NotZeroAddress();
         }
@@ -41,6 +41,4 @@ contract LivrToken is ERC20Burnable, Ownable {
         _mint(_to, _amount);
         return true;
     }
-
-    
 }
