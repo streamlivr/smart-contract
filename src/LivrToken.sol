@@ -11,6 +11,7 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
     error LivrToken_MustBeMoreThanZero();
     error LivrToken_BurnAmountExceedsBalance();
     error LivrToken_NotZeroAddress();
+    error LivrToken_MaxSupplyExceeded();
 
     uint256 public constant MAX_SUPPLY = 500000000 * 10 ** 18;
 
@@ -22,6 +23,11 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
         if (initialSupply <= 0) {
             revert LivrToken_MustBeMoreThanZero();
         }
+        // Check token total supply plus initial supply is less than or equal to MAX_SUPPLY
+        if (totalSupply() + initialSupply > MAX_SUPPLY) {
+            revert LivrToken_MaxSupplyExceeded();
+        }
+
         _mint(_to, initialSupply);
     }
 
@@ -45,6 +51,11 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
 
         if (_amount <= 0) {
             revert LivrToken_MustBeMoreThanZero();
+        }
+
+        // Check token total supply plus _amount is less than or equal to MAX_SUPPLY
+        if (totalSupply() + _amount > MAX_SUPPLY) {
+            revert LivrToken_MaxSupplyExceeded();
         }
 
         _mint(_to, _amount);
