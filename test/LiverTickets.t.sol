@@ -11,7 +11,7 @@ contract LiverTicketTest is Test {
     LivrTicket public livrTicket;
 
     function setUp() public {
-        livrToken = new LivrToken(100 * 10 ** 18, address(1));
+        livrToken = new LivrToken(100 * 10 ** 18, address(this));
         livrTicket = new LivrTicket(address(livrToken));
     }
 
@@ -20,4 +20,12 @@ contract LiverTicketTest is Test {
         string memory tokenURI = livrTicket.s_tokenURI(1);
         assertEq(tokenURI, "https://www.google.com");
     }
+
+    // function testMintTicket() public {
+    //     livrTicket.createTicket(1, 100, 5000000000000000000, "https://www.google.com");
+    //     livrToken.
+    //     livrTicket.mint(1, 10);
+    //     uint256 balance = livrTicket.balanceOf(address(this), 1);
+    //     assertEq(balance, 10);
+    // }
 }

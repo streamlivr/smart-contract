@@ -127,7 +127,7 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
         emit TicketCreated(_id, _maxSupply, _price, msg.sender, _uri);
     }
 
-    function mint(uint96 _id, uint256 numTickets) external payable {
+    function mint(uint96 _id, uint256 numTickets) external nonReentrant payable {
         // find the ticket in the mapping
         s_Ticket memory ticket = s_Tickets[_id];
         // Calcuate cost for ticket numTickets * ticket price
