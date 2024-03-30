@@ -16,9 +16,12 @@ contract LiverTicketTest is Test {
     }
 
     function testCreateTicket() public {
-        livrTicket.createTicket(1, 100, 5000000000000000000, "https://www.google.com");
+        livrTicket.createTicket(100, 5000000000000000000, "https://www.google.com");
+        livrTicket.createTicket(100, 5000000000000000000, "https://www.google.com");
         string memory tokenURI = livrTicket.s_tokenURI(1);
+        uint96 counter = livrTicket.s_tokenIdCounter();
         assertEq(tokenURI, "https://www.google.com");
+        assertEq(counter, 2);
     }
 
     // function testMintTicket() public {

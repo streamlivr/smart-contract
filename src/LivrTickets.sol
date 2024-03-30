@@ -31,9 +31,9 @@ import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC1155Supply {
-    /////////////////////
+    //////////////
     // Errors //
-    /////////////////////
+    /////////////
     error LivrTickets__NotAllowedToken();
     error LivrTickets__PriceTooLow();
     error LivrTickets__PriceTooHigh();
@@ -41,6 +41,8 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
     error LivrTickets__NotEnoughTokenBalance();
     error LivrTickets__TicketNotFound();
     error LivrTickets__TokenTransferFailed();
+    error LivrTickets__TicketSoldOut();
+    error LivrTickets__NotEnoughTickets();
 
     /////////////////////
     // State variables //
@@ -49,17 +51,22 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
     string public name;
     string public symbol;
     address public immutable i_tokenAddress;
+    uint96 public s_tokenIdCounter = 0;
+    uint96 public s_SoldOutTickets = 0;
 
     mapping(uint256 => string) public s_tokenURI;
 
     // Have a Ticket struct that holds the token id, the maxSupply to mint and price, creator address
     struct s_Ticket {
         uint96 tokenId;
+        uint96 supply;
         uint96 maxSupply;
         uint256 price;
         address creator;
         string uri;
     }
+
+    // struct
 
     // Have a mapping that holds the struct
     mapping(uint96 id => s_Ticket) public s_Tickets;
@@ -109,27 +116,33 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
     ///////////////////////
 
     // Have a function that allows creators to add a new Ticket to the mapping
-    function createTicket(uint96 _id, uint96 _maxSupply, uint256 _price, string memory _uri)
+    function createTicket(uint96 _maxSupply, uint256 _price, string memory _uri)
         external
         nonReentrant
         PriceCheck(_price)
     {
-        // Use an if statement to check if the tokenId already exists in the mapping and revert with custom error message if it does
-        if (s_Tickets[_id].tokenId != 0) {
-            revert LivrTickets__TicketAlreadyExists();
-        }
-
-        s_Ticket memory newLivrNFT = s_Ticket(_id, _maxSupply, _price, msg.sender, _uri);
-        s_Tickets[_id] = newLivrNFT;
+        uint96 _tokenId = s_tokenIdCounter + 1;
+        s_Ticket memory newLivrNFT = s_Ticket(_tokenId, _maxSupply, _maxSupply, _price, msg.sender, _uri);
+        s_Tickets[_tokenId] = newLivrNFT;
+        s_tokenIdCounter = _tokenId;
 
         // Call setURI function to set the URI for the token
-        setURI(_id, _uri);
-        emit TicketCreated(_id, _maxSupply, _price, msg.sender, _uri);
+        setURI(_tokenId, _uri);
+        emit TicketCreated(_tokenId, _maxSupply, _price, msg.sender, _uri);
     }
 
-    function mint(uint96 _id, uint256 numTickets) external nonReentrant payable {
+    function mint(uint96 _id, uint96 numTickets) external payable nonReentrant {
         // find the ticket in the mapping
         s_Ticket memory ticket = s_Tickets[_id];
+        // Check if supply is greater or equal to the number of tickets to mint
+
+        if (ticket.supply == 0) {
+            revert LivrTickets__TicketSoldOut();
+        }
+
+        if (ticket.supply < numTickets) {
+            revert LivrTickets__NotEnoughTickets();
+        }
         // Calcuate cost for ticket numTickets * ticket price
         uint256 cost = ticket.price * numTickets;
         // Check if the user has enough balance to mint the tickets
@@ -142,16 +155,41 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
 
         // Transfer the tokens from the user to the contract and the creator
         IERC20 token = IERC20(i_tokenAddress);
-        bool sentPercentage = token.transferFrom(msg.sender, address(this), fee);
-        bool sentCreator = token.transferFrom(msg.sender, ticket.creator, creatorAmount);
+        bool payContract = token.transferFrom(msg.sender, address(this), cost);
+        bool payCreator = token.transferFrom(address(this), ticket.creator, creatorAmount);
 
-        if (!sentPercentage || !sentCreator) {
+        if (!payContract || !payCreator) {
             revert LivrTickets__TokenTransferFailed();
         }
 
+        s_Tickets[_id].supply -= numTickets;
+
         _mint(msg.sender, _id, numTickets, "");
 
+        uint96 supply = ticket.supply - numTickets;
+        if (supply == 0) {
+            s_SoldOutTickets += 1;
+        }
+
         emit PurchasedTicket(msg.sender, ticket.creator, _id, numTickets, cost);
+    }
+
+    function fetchTickets() external view returns (s_Ticket[] memory) {
+        // return all the tickets in the mapping
+        uint96 itemCount = s_tokenIdCounter;
+        uint256 unsoldItemCount = s_tokenIdCounter - s_SoldOutTickets;
+        uint256 currentIndex = 0;
+
+        s_Ticket[] memory items = new s_Ticket[](unsoldItemCount);
+        for (uint96 i = 0; i < itemCount; i++) {
+            if (s_Tickets[i + 1].supply > 0) {
+                uint96 currentId = i + 1;
+                s_Ticket memory currentItem = s_Tickets[currentId];
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
+        return items;
     }
 
     function mintBatch(uint256[] memory _ids, uint256[] memory _amounts) external {

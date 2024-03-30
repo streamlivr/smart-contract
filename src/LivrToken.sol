@@ -15,7 +15,11 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
 
     uint256 public constant MAX_SUPPLY = 500000000 * 10 ** 18;
 
-    constructor(uint256 initialSupply, address _to) ERC20("streamlivr", "STRV") Ownable(msg.sender) ERC20Permit("streamlivr") {
+    constructor(uint256 initialSupply, address _to)
+        ERC20("streamlivr", "STRV")
+        Ownable(msg.sender)
+        ERC20Permit("streamlivr")
+    {
         if (_to == address(0)) {
             revert LivrToken_NotZeroAddress();
         }
@@ -62,19 +66,11 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
         return true;
     }
 
-    function _update(address from, address to, uint256 value)
-        internal
-        override(ERC20, ERC20Votes)
-    {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Votes) {
         super._update(from, to, value);
     }
 
-    function nonces(address owner)
-        public
-        view
-        override(ERC20Permit, Nonces)
-        returns (uint256)
-    {
+    function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 }
