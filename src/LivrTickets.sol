@@ -192,9 +192,9 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
         return items;
     }
 
-    function mintBatch(uint256[] memory _ids, uint256[] memory _amounts) external {
-        _mintBatch(msg.sender, _ids, _amounts, "");
-    }
+    // function mintBatch(uint256[] memory _ids, uint256[] memory _amounts) external {
+    //     _mintBatch(msg.sender, _ids, _amounts, "");
+    // }
 
     function burn(uint256 _id, uint256 _amount) external {
         _burn(msg.sender, _id, _amount);
