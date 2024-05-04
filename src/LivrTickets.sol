@@ -174,6 +174,8 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
         emit PurchasedTicket(msg.sender, ticket.creator, _id, numTickets, cost);
     }
 
+    // SaleMyNft
+
     function fetchTickets() external view returns (s_Ticket[] memory) {
         // return all the tickets in the mapping
         uint96 itemCount = s_tokenIdCounter;

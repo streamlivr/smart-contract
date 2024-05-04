@@ -25,7 +25,7 @@ contract LiverTicketTest is Test {
     }
 
     // function testMintTicket() public {
-    //     livrTicket.createTicket(1, 100, 5000000000000000000, "https://www.google.com");
+    //     livrTicket.createTicket(100, 5000000000000000000, "https://www.google.com");
     //     livrToken.
     //     livrTicket.mint(1, 10);
     //     uint256 balance = livrTicket.balanceOf(address(this), 1);

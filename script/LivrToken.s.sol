@@ -18,9 +18,7 @@ contract LivrTokenScript is Script {
 
         vm.startBroadcast(privateKey);
 
-        LivrToken livrToken = new LivrToken(100 * 10 ** 18, account);
-
-        livrToken.MAX_SUPPLY();
+        new LivrToken(100 * 10 ** 18, account);
 
         vm.stopBroadcast();
     }
