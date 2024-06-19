@@ -217,7 +217,7 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
         _mintBatch(_from, _mintIds, _mintAmounts, "");
     }
 
-    function setURI(uint256 _id, string memory _uri) public {
+    function setURI(uint256 _id, string memory _uri) public onlyOwner {
         s_tokenURI[_id] = _uri;
         emit URI(_uri, _id);
     }

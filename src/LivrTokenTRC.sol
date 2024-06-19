@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
@@ -14,20 +14,14 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
     error LivrToken_MaxSupplyExceeded();
 
 
-    constructor(uint256 initialSupply, address _to)
+    constructor() 
         ERC20("Streamlivr", "LIVR")
         Ownable(msg.sender)
         ERC20Permit("Streamlivr")
     {
-        if (_to == address(0)) {
-            revert LivrToken_NotZeroAddress();
-        }
 
-        if (initialSupply <= 0) {
-            revert LivrToken_MustBeMoreThanZero();
-        }
 
-        _mint(_to, initialSupply);
+        _mint(msg.sender, 20000000000000000000000000);
     }
 
     function burn(uint256 _amount) public override onlyOwner {
