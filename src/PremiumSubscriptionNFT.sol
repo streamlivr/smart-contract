@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MusicSubscriptionNFT is ERC1155, Ownable {
+contract PremiumSubscriptionNFT is ERC1155, Ownable {
     uint256 private _tokenIdCounter;
 
     struct Subscription {
@@ -20,7 +20,7 @@ contract MusicSubscriptionNFT is ERC1155, Ownable {
     uint256 public subscriptionDuration = 30 days;
     uint256 public subscriptionPrice = 0.0001 ether;
 
-    constructor() ERC1155("streamLivre") Ownable(msg.sender) {}
+    constructor() ERC1155("streamLivr") Ownable(msg.sender) {}
 
     // Function to subscribe
     function subscribe(string memory _uri) public payable {
