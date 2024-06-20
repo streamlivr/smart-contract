@@ -41,7 +41,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
     uint256 public constant USD_TO_LIVR_RATE = 116279000000000000000; // 1 USDT = 116.279 $LIVR
     address immutable i_usdContratAddress;
     address immutable i_livrContractAddress;
-    address private receiver;
+    address public s_receiver = 0x1b6570e96E942678f3Ad9BB53D7BbDaE28E9A91e;
     uint256 public constant MINIMUM_SALE_AMOUNT = 50;
     uint256 public constant MAXIMUM_SALE_AMOUNT = 20000;
 
@@ -92,10 +92,14 @@ contract LivrSale is Ownable, ReentrancyGuard {
         uint256 totalLivr = calculateSale(usdAmount);
 
         // Transfer value
-        usdToken.transferFrom(msg.sender, receiver, usdAmount);
+        usdToken.transferFrom(msg.sender, s_receiver, usdAmount);
 
         livrToken.transferFrom(address(this), msg.sender, totalLivr);
 
         emit SaleMade(usdAmount, totalLivr, msg.sender);
+    }
+
+    function updateReceiver (address newReceiver) external onlyOwner{
+        s_receiver = newReceiver;
     }
 }
