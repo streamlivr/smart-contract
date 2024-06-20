@@ -13,7 +13,6 @@ contract LivrToken is ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
     error LivrToken_NotZeroAddress();
     error LivrToken_MaxSupplyExceeded();
 
-
     constructor(uint256 initialSupply, address _to)
         ERC20("Streamlivr", "LIVR")
         Ownable(msg.sender)
