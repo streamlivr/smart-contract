@@ -42,7 +42,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
     address immutable i_usdContratAddress;
     address immutable i_livrContractAddress;
     address public s_receiver = 0x1b6570e96E942678f3Ad9BB53D7BbDaE28E9A91e;
-    uint256 public constant MINIMUM_SALE_AMOUNT = 50;
+    uint256 public constant MINIMUM_SALE_AMOUNT = 10;
     uint256 public constant MAXIMUM_SALE_AMOUNT = 20000;
 
     bool public s_pause = false;
