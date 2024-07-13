@@ -39,11 +39,11 @@ contract LivrSale is Ownable, ReentrancyGuard {
     /////////////////////
 
     uint256 public constant USD_TO_LIVR_RATE = 116279000000000000000; // 1 USDT = 116.279 $LIVR
-    address immutable i_usdContratAddress;
-    address immutable i_livrContractAddress;
+    IERC20 public immutable i_usdToken;
+    IERC20 public immutable i_livrToken;
     address public s_receiver = 0x1b6570e96E942678f3Ad9BB53D7BbDaE28E9A91e;
-    uint256 public constant MINIMUM_SALE_AMOUNT = 10;
-    uint256 public constant MAXIMUM_SALE_AMOUNT = 20000;
+    uint256 public constant MINIMUM_SALE_AMOUNT = 10 ether;
+    uint256 public constant MAXIMUM_SALE_AMOUNT = 20000 ether;
 
     bool public s_pause = false;
 
@@ -58,8 +58,8 @@ contract LivrSale is Ownable, ReentrancyGuard {
     /////////////////////
 
     constructor(address _usdContractAddress, address _livrContractAddress) Ownable(msg.sender) {
-        i_usdContratAddress = _usdContractAddress;
-        i_livrContractAddress = _livrContractAddress;
+        i_usdToken = IERC20(_usdContractAddress);
+        i_livrToken = IERC20(_livrContractAddress);
     }
 
     ////////////////////////
@@ -67,14 +67,20 @@ contract LivrSale is Ownable, ReentrancyGuard {
     ///////////////////////
 
     function calculateSale(uint256 usdtAmount) public pure returns (uint256) {
-        return (usdtAmount * USD_TO_LIVR_RATE);
+        if (usdtAmount >= 10**18) {
+            // usdtAmount is in wei
+            return (usdtAmount * USD_TO_LIVR_RATE) / 10**18;
+        } else {
+            // usdtAmount is in ether
+            return usdtAmount * USD_TO_LIVR_RATE;
+        }
     }
 
     function updatePause() external onlyOwner {
         s_pause = !s_pause;
     }
 
-    function buy(uint256 usdAmount) external payable nonReentrant {
+    function buy(uint256 usdAmount) public nonReentrant {
         if (usdAmount < MINIMUM_SALE_AMOUNT) {
             revert LivrSale__BelowMinimumSaleAmount();
         }
@@ -82,19 +88,25 @@ contract LivrSale is Ownable, ReentrancyGuard {
             revert LivrSale__AboveMaximumSaleAmount();
         }
 
-        if (IERC20(i_usdContratAddress).balanceOf(msg.sender) < usdAmount) {
+        if (i_usdToken.balanceOf(msg.sender) < usdAmount) {
             revert LivrSale__NotEnoughTokenBalance();
         }
-        IERC20 usdToken = IERC20(i_usdContratAddress);
-        IERC20 livrToken = IERC20(i_livrContractAddress);
+
+        // Ensure the contract has enough allowance
+        uint256 allowance = i_usdToken.allowance(msg.sender, address(this));
+        require(allowance >= usdAmount, "Allowance is not sufficient");
 
         // Calculate how much $livr user gets
         uint256 totalLivr = calculateSale(usdAmount);
 
-        // Transfer value
-        usdToken.transferFrom(msg.sender, s_receiver, usdAmount);
 
-        livrToken.transferFrom(address(this), msg.sender, totalLivr);
+        // Transfer value
+        bool paid = i_usdToken.transferFrom(msg.sender, s_receiver, usdAmount);
+        require(paid, "USD token transfer failed");
+        // Transfer $livr token to user
+        bool tokenTransfered = i_livrToken.transfer(msg.sender, totalLivr);
+        require(tokenTransfered, "Token transfer failed");
+
 
         emit SaleMade(usdAmount, totalLivr, msg.sender);
     }
