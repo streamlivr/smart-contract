@@ -98,6 +98,11 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
         // Calculate how much $livr user gets
         uint256 totalLivr = calculateSale(usdAmount);
+        require(totalLivr > 0, "Calculate sale did not return a value");
+        if (i_livrToken.balanceOf(address(this)) < totalLivr) {
+            revert LivrSale__NotEnoughTokenBalance();
+        }
+
 
 
         // Transfer value
@@ -110,6 +115,8 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
         emit SaleMade(usdAmount, totalLivr, msg.sender);
     }
+
+    // Withdrawal
 
     function updateReceiver (address newReceiver) external onlyOwner{
         s_receiver = newReceiver;
