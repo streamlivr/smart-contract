@@ -66,19 +66,19 @@ contract LivrSale is Ownable, ReentrancyGuard {
     // External Functions //
     ///////////////////////
 
-    function calculateSale(uint256 usdtAmount) public pure returns (uint256) {
-        if (usdtAmount >= 10**18) {
-            // usdtAmount is in wei
-            return (usdtAmount * USD_TO_LIVR_RATE) / 10**18;
-        } else {
-            // usdtAmount is in ether
-            return usdtAmount * USD_TO_LIVR_RATE;
-        }
-    }
-
     function updatePause() external onlyOwner {
         s_pause = !s_pause;
     }
+
+    function updateReceiver(address newReceiver) external onlyOwner {
+        s_receiver = newReceiver;
+    }
+
+    // Withdrawal
+
+    ////////////////////////
+    // Public Functions //
+    ///////////////////////
 
     function buy(uint256 usdAmount) public nonReentrant {
         if (usdAmount < MINIMUM_SALE_AMOUNT) {
@@ -103,8 +103,6 @@ contract LivrSale is Ownable, ReentrancyGuard {
             revert LivrSale__NotEnoughTokenBalance();
         }
 
-
-
         // Transfer value
         bool paid = i_usdToken.transferFrom(msg.sender, s_receiver, usdAmount);
         require(paid, "USD token transfer failed");
@@ -112,13 +110,16 @@ contract LivrSale is Ownable, ReentrancyGuard {
         bool tokenTransfered = i_livrToken.transfer(msg.sender, totalLivr);
         require(tokenTransfered, "Token transfer failed");
 
-
         emit SaleMade(usdAmount, totalLivr, msg.sender);
     }
 
-    // Withdrawal
-
-    function updateReceiver (address newReceiver) external onlyOwner{
-        s_receiver = newReceiver;
+    function calculateSale(uint256 usdtAmount) public pure returns (uint256) {
+        if (usdtAmount >= 10 ** 18) {
+            // usdtAmount is in wei
+            return (usdtAmount * USD_TO_LIVR_RATE) / 10 ** 18;
+        } else {
+            // usdtAmount is in ether
+            return usdtAmount * USD_TO_LIVR_RATE;
+        }
     }
 }
