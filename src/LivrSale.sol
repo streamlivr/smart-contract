@@ -66,7 +66,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
     // External Functions //
     ///////////////////////
 
-    function updatePause() external onlyOwner {
+    function updatePause() external onlyOwner nonReentrant {
         s_pause = !s_pause;
     }
 
@@ -76,7 +76,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
     // Withdrawal
 
-    function withdraw () external {
+    function withdraw () external onlyOwner {
         uint256 balance = i_livrToken.balanceOf(address(this));
 
         require(balance > 0);
