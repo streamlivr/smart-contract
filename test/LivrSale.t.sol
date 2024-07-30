@@ -63,6 +63,17 @@ contract SaleTest is Test {
     }
 
     function test_livrBalanceDecrease() public {
-      
+      uint256 amount = 10000000000000000000;
+
+      uint256 contractLivrBalance = livrToken.balanceOf(address(livrSale));
+
+      uint256 substractedLivrBalance = livrSale.calculateSale(amount);
+      livrSale.buy(amount);
+
+      uint256 postContractLivrBalance = livrToken.balanceOf(address(livrSale));
+
+      uint256 result = postContractLivrBalance + substractedLivrBalance;
+
+      assertEq(result, contractLivrBalance);
     }
 }

@@ -76,6 +76,15 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
     // Withdrawal
 
+    function withdraw () external {
+        uint256 balance = i_livrToken.balanceOf(address(this));
+
+        require(balance > 0);
+
+        bool tokenTransfered = i_livrToken.transfer(s_receiver, balance);
+        require(tokenTransfered, "Token transfer failed");
+    }
+
     ////////////////////////
     // Public Functions //
     ///////////////////////
