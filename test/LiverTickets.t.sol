@@ -3,6 +3,7 @@
 pragma solidity 0.8.20;
 
 import "forge-std/Test.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "../src/LivrTickets.sol";
 import "../src/LivrToken.sol";
 
@@ -24,11 +25,11 @@ contract LiverTicketTest is Test {
         assertEq(counter, 2);
     }
 
-    // function testMintTicket() public {
-    //     livrTicket.createTicket(100, 5000000000000000000, "https://www.google.com");
-    //     livrToken.
-    //     livrTicket.mint(1, 10);
-    //     uint256 balance = livrTicket.balanceOf(address(this), 1);
-    //     assertEq(balance, 10);
-    // }
+    function testMintTicket() public {
+        livrTicket.createTicket(100, 5000000000000000000, "https://www.google.com");
+        // livrToken.
+        livrTicket.mint(1, 10);
+        uint256 balance = livrTicket.balanceOf(address(this), 1);
+        assertEq(balance, 10);
+    }
 }
