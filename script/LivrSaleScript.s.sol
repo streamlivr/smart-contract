@@ -16,7 +16,7 @@ contract LivrSaleScript is Script {
 
         vm.startBroadcast(privateKey);
 
-        new LivrSale(0x5fd84259d66Cd46123540766Be93DFE6D43130D7, 0xEe0203F4C79634d40136F8481Bdc1edf1D1325E8);
+        new LivrSale(0x5fd84259d66Cd46123540766Be93DFE6D43130D7, 0xEe0203F4C79634d40136F8481Bdc1edf1D1325E8, 0x1b6570e96E942678f3Ad9BB53D7BbDaE28E9A91e);
 
         vm.stopBroadcast();
     }

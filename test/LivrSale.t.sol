@@ -16,7 +16,7 @@ contract SaleTest is Test {
         livrToken = new Token(100000000000000000000000000000, "TstreamLivr", "TLIVR");
         usdc = new Token(100000000000000000000000000000, "Dollar", "USDC");
         // Deploy Presale contract
-        livrSale = new LivrSale(address(usdc), address(livrToken));
+        livrSale = new LivrSale(address(usdc), address(livrToken), 0x1b6570e96E942678f3Ad9BB53D7BbDaE28E9A91e);
 
         // Allow livrSale to tranfer usdc
         usdc.approve(address(livrSale), 1000000000000000000000000000);
