@@ -35,7 +35,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
     error LivrSale__AboveMaximumSaleAmount();
     error LivrSale__NotEnoughTokenBalance();
     error LivrSale__SalePaused();
-    error LivrSale__NotAllowedToCalim();
+    error LivrSale__NotAllowedToClaim();
     /////////////////////
     // State variables //
     /////////////////////
@@ -80,8 +80,9 @@ contract LivrSale is Ownable, ReentrancyGuard {
         s_pauseSale = !s_pauseSale;
     }
 
-    function updateClaimStatus() external onlyOwner {
-        s_claimable = !s_claimable;
+    function updateClaimStatus(bool useClaimPercentage, bool claimable) external onlyOwner {
+        s_claimable = claimable;
+        s_claimPercentage = useClaimPercentage;
     }
 
     function updateReceiver(address newReceiver) external onlyOwner {
@@ -90,7 +91,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
     function claimTokens() external {
         if (!s_claimable) {
-            revert LivrSale__NotAllowedToCalim();
+            revert LivrSale__NotAllowedToClaim();
         }
 
         uint256 purchased = totalPurchased[msg.sender];
