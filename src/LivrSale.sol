@@ -33,7 +33,8 @@ contract LivrSale is Ownable, ReentrancyGuard {
     /////////////
     error LivrSale__BelowMinimumSaleAmount();
     error LivrSale__AboveMaximumSaleAmount();
-    error LivrSale__NotEnoughTokenBalance();
+    error LivrSale__NotEnoughLivrTokenBalance();
+    error LivrSale__NotEnoughUSDTokenBalance();
     error LivrSale__SalePaused();
     error LivrSale__NotAllowedToClaim();
     /////////////////////
@@ -42,6 +43,8 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
     uint256 public constant USD_TO_LIVR_RATE = 116279000000000000000; // 1 USDT = 116.279 $LIVR
     uint96 public constant CLAIM_PERCENTAGE = 20;
+    uint256 constant USDT_DECIMALS = 6;
+    uint256 constant LIVR_DECIMALS = 18;
     IERC20 public immutable i_usdToken;
     IERC20 public immutable i_livrToken;
     address public s_receiver;
@@ -156,15 +159,15 @@ contract LivrSale is Ownable, ReentrancyGuard {
         }
 
         if (i_usdToken.balanceOf(msg.sender) < usdAmount) {
-            revert LivrSale__NotEnoughTokenBalance();
+            revert LivrSale__NotEnoughUSDTokenBalance();
         }
 
 
         // Calculate how much $livr user gets
-        uint256 totalLivr = calculateSale(usdAmount);
+        uint256 totalLivr = convertUSDTToLivr(usdAmount);
         require(totalLivr > 0, "Calculate sale did not return a value");
         if (i_livrToken.balanceOf(address(this)) < totalLivr) {
-            revert LivrSale__NotEnoughTokenBalance();
+            revert LivrSale__NotEnoughLivrTokenBalance();
         }
 
         // Add user to investors mapping
@@ -177,13 +180,10 @@ contract LivrSale is Ownable, ReentrancyGuard {
         emit SaleMade(usdAmount, totalLivr, msg.sender);
     }
 
-    function calculateSale(uint256 usdtAmount) public pure returns (uint256) {
-        if (usdtAmount >= 10 ** 18) {
-            // usdtAmount is in wei
-            return (usdtAmount * USD_TO_LIVR_RATE) / 10 ** 18;
-        } else {
-            // usdtAmount is in ether
-            return usdtAmount * USD_TO_LIVR_RATE;
-        }
+    function convertUSDTToLivr(uint256 usdAmount) public pure returns (uint256) {
+        // Given that 0.015 USDT = 1 Livr token, we can calculate:
+        // 1 Livr token = 0.015 USDT => 1 Livr = 1 / 0.015 USDT
+        // To get the Livr amount from the USDT amount:
+        return (usdAmount * (10 ** LIVR_DECIMALS)) / (10 ** USDT_DECIMALS * 15);
     }
 }
