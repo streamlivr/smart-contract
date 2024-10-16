@@ -11,7 +11,7 @@
 // Modifiers
 // Functions
 
-// Layout of Functions:
+// Layout of Functions
 // constructor
 // receive function (if exists)
 // fallback function (if exists)
@@ -41,15 +41,16 @@ contract LivrSale is Ownable, ReentrancyGuard {
     // State variables //
     /////////////////////
 
-    uint256 public constant USD_TO_LIVR_RATE = 116279000000000000000; // 1 USDT = 116.279 $LIVR
     uint96 public constant CLAIM_PERCENTAGE = 20;
     uint256 constant USDT_DECIMALS = 6;
     uint256 constant LIVR_DECIMALS = 18;
     IERC20 public immutable i_usdToken;
     IERC20 public immutable i_livrToken;
     address public s_receiver;
-    uint256 public constant MINIMUM_SALE_AMOUNT = 10 ether;
-    uint256 public constant MAXIMUM_SALE_AMOUNT = 20000 ether;
+    uint256 public constant MINIMUM_SALE_AMOUNT = 10;
+    uint256 public constant MAXIMUM_SALE_AMOUNT = 20000;
+    uint256 public constant USD_TO_LIVR_RATE = 66670000000000000000;
+
     bool public s_claimable; 
     bool public s_pauseSale;
     bool public s_claimPercentage;
@@ -147,7 +148,7 @@ contract LivrSale is Ownable, ReentrancyGuard {
 
         require(address(msg.sender).code.length == 0, "Contracts are prohibited");
 
-        if (!s_pauseSale) {
+        if (s_pauseSale) {
             revert LivrSale__SalePaused();
         }
 
@@ -174,16 +175,20 @@ contract LivrSale is Ownable, ReentrancyGuard {
         totalPurchased[msg.sender] += totalLivr;
 
         // Transfer value
-        bool paid = i_usdToken.transferFrom(msg.sender, s_receiver, usdAmount);
+        uint256 value = usdAmount * 10 ** 6;
+        bool paid = i_usdToken.transferFrom(msg.sender, s_receiver, value);
         require(paid, "USD token transfer failed");
 
         emit SaleMade(usdAmount, totalLivr, msg.sender);
     }
 
     function convertUSDTToLivr(uint256 usdAmount) public pure returns (uint256) {
-        // Given that 0.015 USDT = 1 Livr token, we can calculate:
-        // 1 Livr token = 0.015 USDT => 1 Livr = 1 / 0.015 USDT
-        // To get the Livr amount from the USDT amount:
-        return (usdAmount * (10 ** LIVR_DECIMALS)) / (10 ** USDT_DECIMALS * 15);
+        // Calculate the multiplier for Livr tokens
+        if (usdAmount >= 10 ** 18) {
+            // usdAmount is in wei
+            return (usdAmount * USD_TO_LIVR_RATE) / 10 ** 18;
+        } else {
+            return usdAmount * USD_TO_LIVR_RATE;
+        }
     }
 }
