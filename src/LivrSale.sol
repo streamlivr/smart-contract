@@ -120,8 +120,9 @@ contract LivrSale is Ownable, ReentrancyGuard {
         // Update the claimed amount
         totalClaimed[msg.sender] += claimAmount;
 
-        // Transfer the tokens (pseudo-code, assuming you have a transfer function)
-        // token.transfer(msg.sender, claimAmount);
+        // Transfer the tokens 
+        bool tokenTransfered = i_livrToken.transfer(msg.sender, claimAmount);
+        require(tokenTransfered, "Token transfer failed");
         
         // Emit an event (optional)
         emit TokensClaimed(msg.sender, claimAmount);
