@@ -36,7 +36,7 @@ contract SaleTest is Test {
     }
 
     function test_calcuateLivr() public {
-        uint256 result = livrSale.calculateSale(10000000000000000000);
+        uint256 result = livrSale.convertUSDTToLivr(10000000000000000000);
         assertEq(1162790000000000000000, result);
     }
 
@@ -55,7 +55,7 @@ contract SaleTest is Test {
 
         // First check livr balance
         uint256 perLivreBalance = livrToken.balanceOf(address(this));
-        uint256 addedLivrBalance = livrSale.calculateSale(amount);
+        uint256 addedLivrBalance = livrSale.convertUSDTToLivr(amount);
         livrSale.buy(amount);
         uint256 postLivrbalance = livrToken.balanceOf(address(this));
         uint256 total = perLivreBalance + addedLivrBalance;
@@ -67,7 +67,7 @@ contract SaleTest is Test {
 
       uint256 contractLivrBalance = livrToken.balanceOf(address(livrSale));
 
-      uint256 substractedLivrBalance = livrSale.calculateSale(amount);
+      uint256 substractedLivrBalance = livrSale.convertUSDTToLivr(amount);
       livrSale.buy(amount);
 
       uint256 postContractLivrBalance = livrToken.balanceOf(address(livrSale));

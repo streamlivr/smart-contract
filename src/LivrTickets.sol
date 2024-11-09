@@ -26,11 +26,10 @@ pragma solidity 0.8.20;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
-contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC1155Supply {
+contract LivrTicket is ReentrancyGuard, Ownable, ERC1155Holder {
     //////////////
     // Errors //
     /////////////
@@ -105,9 +104,9 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
     // Functions       //
     /////////////////////
 
-    constructor(address _tokenAddress) ERC1155("") Ownable(msg.sender) {
-        name = "Streamlivr NFTs";
-        symbol = "STRN";
+    constructor(address _tokenAddress) Ownable(msg.sender) {
+        name = "livr NFTs";
+        symbol = "LIVRN";
         i_tokenAddress = _tokenAddress;
     }
 
@@ -127,7 +126,7 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
         s_tokenIdCounter = _tokenId;
 
         // Call setURI function to set the URI for the token
-        setURI(_tokenId, _uri);
+        // setURI(_tokenId, _uri);
         emit TicketCreated(_tokenId, _maxSupply, _price, msg.sender, _uri);
     }
 
@@ -164,7 +163,7 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
 
         s_Tickets[_id].supply -= numTickets;
 
-        _mint(msg.sender, _id, numTickets, "");
+        // mint(msg.sender, _id, numTickets, "");
 
         uint96 supply = ticket.supply - numTickets;
         if (supply == 0) {
@@ -194,60 +193,4 @@ contract LivrTicket is ERC1155, ReentrancyGuard, Ownable, ERC1155Pausable, ERC11
         return items;
     }
 
-    // function mintBatch(uint256[] memory _ids, uint256[] memory _amounts) external {
-    //     _mintBatch(msg.sender, _ids, _amounts, "");
-    // }
-
-    function burn(uint256 _id, uint256 _amount) external {
-        _burn(msg.sender, _id, _amount);
-    }
-
-    function burnBatch(uint256[] memory _ids, uint256[] memory _amounts) external {
-        _burnBatch(msg.sender, _ids, _amounts);
-    }
-
-    function burnForMint(
-        address _from,
-        uint256[] memory _burnIds,
-        uint256[] memory _burnAmounts,
-        uint256[] memory _mintIds,
-        uint256[] memory _mintAmounts
-    ) external onlyOwner {
-        _burnBatch(_from, _burnIds, _burnAmounts);
-        _mintBatch(_from, _mintIds, _mintAmounts, "");
-    }
-
-    function setURI(uint256 _id, string memory _uri) public onlyOwner {
-        s_tokenURI[_id] = _uri;
-        emit URI(_uri, _id);
-    }
-
-    function uri(uint256 _id) public view override returns (string memory) {
-        return s_tokenURI[_id];
-    }
-
-    function changeOwner(address newOwner) external onlyOwner {
-        transferOwnership(newOwner);
-    }
-
-    ////////////////////////
-    // Internal Functions //
-    ///////////////////////
-
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-
-    // The following functions are overrides required by Solidity.
-
-    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
-        internal
-        override(ERC1155, ERC1155Pausable, ERC1155Supply)
-    {
-        super._update(from, to, ids, values);
-    }
 }

@@ -93,7 +93,9 @@ contract LivrSale is Ownable, ReentrancyGuard {
         s_receiver = newReceiver;
     }
 
-    function claimTokens() external {
+    function claimTokens() external nonReentrant {
+        require(address(msg.sender).code.length == 0, "Contracts are prohibited");
+
         if (!s_claimable) {
             revert LivrSale__NotAllowedToClaim();
         }
