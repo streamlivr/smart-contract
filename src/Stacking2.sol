@@ -83,8 +83,6 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         userStakedTokens[msg.sender] = 0;
         userRewardRate[msg.sender] = 0;
         userTokenIsStaked[msg.sender] = false;
-        userStakeDuration[msg.sender] = 0;
-        userStakeDate[msg.sender] = 0;
         totalStakedTokens -= stakedAmount;
 
         emit Unstaked(msg.sender, stakedAmount);
@@ -153,12 +151,24 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         rewardRateFor2yr = _2yrs;
     }
 
+    function getRewardRates() external view onlyOwner returns(uint256 reward30days, uint256 reward1yr, uint256 reward2yr) {
+        return(rewardRateFor30days, rewardRateFor1yr, rewardRateFor2yr);
+    }
+
     function setWithdrawalStatus(bool _value) external onlyOwner {
         withdrawalPaused = !_value;
     }
 
     function setRewardClaimStatus(bool _value) external onlyOwner {
         rewardClaimPaused = !_value;
+    }
+
+    function getWithdrawalStatus() external view onlyOwner returns(bool) {
+        return withdrawalPaused;
+    }
+
+    function getRewardClaimStatus() external view onlyOwner returns(bool) {
+        return rewardClaimPaused;
     }
 
     function getRewardPoolBalance() external view onlyOwner returns (uint256) {
