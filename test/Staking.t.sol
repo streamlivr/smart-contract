@@ -10,7 +10,7 @@ contract StackingContractTest is Test {
     Token stakingToken;
     StreamlivrStaking stakingContract;
 
-    uint256 constant INITIAL_SUPPLY = 1000000 ;
+    uint256 constant INITIAL_SUPPLY = 1000000;
 
     function setUp() public {
         // Deploy Reward and Staking Contracts to interact with the contract
@@ -21,7 +21,7 @@ contract StackingContractTest is Test {
         stakingContract = new StreamlivrStaking(address(stakingToken), address(rewardToken));
 
         // Fund thee reward Pool
-        rewardToken.transfer(address(stakingContract), INITIAL_SUPPLY);
+        rewardToken.transfer(address(stakingContract), INITIAL_SUPPLY - 1000);
 
         // Approve the transfer of stacking tokens by the stacking contract
         stakingToken.approve(address(stakingContract), INITIAL_SUPPLY);
@@ -29,7 +29,7 @@ contract StackingContractTest is Test {
 
     function test_RewardPoolBalance() public {
         uint256 bal = rewardToken.balanceOf(address(stakingContract));
-        assertEq(INITIAL_SUPPLY, bal);
+        assertEq(INITIAL_SUPPLY - 1000, bal);
     }
 
     function test_stakingAllowance() public {
@@ -94,5 +94,63 @@ contract StackingContractTest is Test {
         uint256 stakedAmount = stakingContract.getStakedAmount();
 
         assertEq(amount, stakedAmount, "Failure to track user's staked tokemn amount");
+    }
+
+    function test_getRewardAmount() public {
+        uint256 amount = 1000;
+        stakingContract.stake(amount, 30);
+
+        skip(30 days);
+
+        stakingContract.unstake();
+
+        assertEq(stakingContract.getRewardAmount(), ((amount * 2) / 100), "Incorrect Reward recieved");
+    }
+
+    function test_subscriptionIsExpired() public {
+        uint256 amount = 1000;
+        stakingContract.stake(amount, 30);
+
+        skip(30 days);
+
+        assertEq(stakingContract.isSubscriptionOrStakingActive(), false, "Subscription didn't expire, It should have");
+    }
+
+    function test_fundRewardPool() public {
+        if(address(this) == stakingContract.owner()) {
+            rewardToken.approve(address(stakingContract), 100);
+            
+            uint256 amount = 10;
+
+            uint256 prevBal = rewardToken.balanceOf(address(stakingContract));
+
+            stakingContract.fundRewardPool(amount);
+
+            uint256 newBal = rewardToken.balanceOf(address(stakingContract));
+
+            assertEq(prevBal + amount, newBal, "No token sent to the smart contract");
+        }
+    }
+
+    function test_setWithdrawStatusAndsetRewardClaimStatus() public {
+        bool value = false;
+
+        if(address(this) == stakingContract.owner()) {
+            stakingContract.setRewardClaimStatus(value);
+            stakingContract.setWithdrawalStatus(value);
+
+            assertEq(stakingContract.getRewardClaimStatus(), !value, "Reward Claim Status wasn't set");
+            assertEq(stakingContract.getWithdrawalStatus(), !value, "Withdraw or Unstake Status wasn't set");
+        }
+    }
+
+    function test_updateRewardRates() public {
+        uint256 rate30days = 5;
+        uint256 rate1yr = 10;
+        uint256 rate2yr = 20;
+
+        stakingContract.updateRewardRates(rate30days, rate1yr, rate2yr);
+
+        // assertEq(stakingContract.getRewardRates(), rate30days);
     }
 }
