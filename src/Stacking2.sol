@@ -18,13 +18,13 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     IERC20 immutable rewardToken;
 
     uint256 totalStakedTokens;
+    uint256 totalUsersRewards;
     
     uint256 public rewardRateFor30days = 2; // 3% for monthly staking
     uint256 public rewardRateFor1yr = 2; // 40% for yearly staking
     uint256 public rewardRateFor2yr = 4; // 85% for two-year staking
 
-    uint256 constant MIN_STAKE_AMOUNT = 10; // 10 tokens, assuming 18 decimals
-    uint256 constant tokenDecimals = 1e18;
+    uint256 constant MIN_STAKE_AMOUNT = 10 ; // 10 tokens, assuming 18 decimals
 
     mapping(address => uint256) userStakedTokens;
     mapping(address => uint256) userStakeDate;
@@ -53,12 +53,15 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         require(!userTokenIsStaked[msg.sender], "Already staking");
 
         uint256 rewardRate = getRewardRate(durationInDays);
+        uint256 reward = calculateReward(amount, rewardRate);
+
         totalStakedTokens += amount;
+        totalUsersRewards += reward;
 
         userStakedTokens[msg.sender] = amount;
         userStakeDate[msg.sender] = block.timestamp;
         userStakeDuration[msg.sender] = durationInDays;
-        userRewards[msg.sender] = calculateReward(amount, rewardRate);
+        userRewards[msg.sender] += reward;
         userRewardRate[msg.sender] = rewardRate;
         userTokenIsStaked[msg.sender] = true;
 
@@ -80,6 +83,9 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         userStakedTokens[msg.sender] = 0;
         userRewardRate[msg.sender] = 0;
         userTokenIsStaked[msg.sender] = false;
+        userStakeDuration[msg.sender] = 0;
+        userStakeDate[msg.sender] = 0;
+        totalStakedTokens -= stakedAmount;
 
         emit Unstaked(msg.sender, stakedAmount);
 
@@ -95,38 +101,43 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         require(reward > 0, "No reward available");
         
         userRewards[msg.sender] = 0;
+        totalUsersRewards -= reward;
+
         emit RewardsClaimed(msg.sender, reward);
 
         bool success = rewardToken.transfer(msg.sender, reward);
         if (!success) revert TransferFailed();
     }
 
-    function switchPlan(uint256 newDurationInDays) external nonReentrant {
-        require(userTokenIsStaked[msg.sender], "No tokens staked");
+    // function switchPlan(uint256 newDurationInDays) external nonReentrant {
+    //     require(userTokenIsStaked[msg.sender], "No tokens staked");
 
-        uint256 stakedAmount = userStakedTokens[msg.sender];
+    //     uint256 stakedAmount = userStakedTokens[msg.sender];
 
-        uint256 oldRewardRate = userRewardRate[msg.sender];
-        uint256 newRewardRate = getRewardRate(newDurationInDays);
+    //     uint256 oldRewardRate = userRewardRate[msg.sender];
+    //     uint256 newRewardRate = getRewardRate(newDurationInDays);
 
-        uint256 oldDuration = userStakeDuration[msg.sender];
-        userStakeDuration[msg.sender] = newDurationInDays;
-        userRewardRate[msg.sender] = newRewardRate;
+    //     uint256 oldDuration = userStakeDuration[msg.sender];
+    //     userStakeDuration[msg.sender] = newDurationInDays;
+    //     userRewardRate[msg.sender] = newRewardRate;
 
-        if(!(isSubscriptionOrStakingActive())) {
-            userRewards[msg.sender] += calculateReward(stakedAmount, newRewardRate);
-        }else {
-            uint256 rewardForTheTimePeriodStaked = 
-            stakedAmount 
-            * ((oldRewardRate / 100) / (oldDuration * 1 days)) // reward rate calculation in decimals for a single second
-            * (block.timestamp - userStakeDate[msg.sender]); // Number of seconds token has been staked before plan upgrade
-            userRewards[msg.sender] = calculateReward(stakedAmount, newRewardRate) + rewardForTheTimePeriodStaked;
-        }
+    //     uint256 reward = calculateReward(stakedAmount, newRewardRate);
 
-        userStakeDate[msg.sender] = block.timestamp;
+    //     if(!(isSubscriptionOrStakingActive())) {
+    //         userRewards[msg.sender] += reward;
+    //     }else {
+    //         uint256 rewardForTheTimePeriodStaked = 
+    //         stakedAmount 
+    //         * ((oldRewardRate / 100) / (oldDuration * 1 days)) // reward rate calculation in decimals for a single second
+    //         * (block.timestamp - userStakeDate[msg.sender]); // Number of seconds token has been staked before plan upgrade
+    //         userRewards[msg.sender] = reward + rewardForTheTimePeriodStaked;
+    //     }
 
-        emit PlanSwitched(msg.sender, newDurationInDays);
-    }
+    //     userStakeDate[msg.sender] = block.timestamp;
+    //     totalUsersRewards += reward;
+
+    //     emit PlanSwitched(msg.sender, newDurationInDays);
+    // }
 
     // ------------------ ADMIN ---------------------------
     function fundRewardPool(uint256 amount) external onlyOwner {
@@ -148,6 +159,22 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
     function setRewardClaimStatus(bool _value) external onlyOwner {
         rewardClaimPaused = !_value;
+    }
+
+    function getRewardPoolBalance() external view onlyOwner returns (uint256) {
+        if(address(stakingToken) == address(rewardToken)) {
+            return (rewardToken.balanceOf(address(this)) - totalStakedTokens);
+        }else {
+            return rewardToken.balanceOf(address(this));
+        }
+    }
+
+    function getTotalEstimatedUsersRewards() external view  onlyOwner returns(uint256) {
+        return totalUsersRewards;
+    }
+
+    function getTotalStakedAmount() external view onlyOwner returns(uint256) {
+        return totalStakedTokens;
     }
     
     // --------------------------- HELPERS --------------------
