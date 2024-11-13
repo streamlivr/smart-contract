@@ -12,6 +12,7 @@ error InvalidStakingDuration();
 error NoStakedTokens();
 error StakingPeriodNotReached();
 error RewardClaimingPaused();
+error LessThanMinStakeAmount();
 
 contract StreamlivrStaking is ReentrancyGuard, Ownable {
     IERC20 immutable stakingToken;
@@ -24,7 +25,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     uint256 public rewardRateFor1yr = 2; // 40% for yearly staking
     uint256 public rewardRateFor2yr = 4; // 85% for two-year staking
 
-    uint256 constant MIN_STAKE_AMOUNT = 10 ; // 10 tokens, assuming 18 decimals
+    uint256 constant MIN_STAKE_AMOUNT = 10 * 1**18; // 10 tokens, assuming 18 decimals
 
     mapping(address => uint256) userStakedTokens;
     mapping(address => uint256) userStakeDate;
@@ -49,7 +50,6 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     // ----------------- USER CORE ACTIONS ----------------------
     function stake(uint256 amount, uint256 durationInDays) external nonReentrant {
         require(amount >= MIN_STAKE_AMOUNT, "Minimum stake amount not met");
-        require(amount >= MIN_STAKE_AMOUNT, "Maximum stake amount exceeded");
         require(!userTokenIsStaked[msg.sender], "Already staking");
 
         uint256 rewardRate = getRewardRate(durationInDays);
@@ -83,6 +83,8 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         userStakedTokens[msg.sender] = 0;
         userRewardRate[msg.sender] = 0;
         userTokenIsStaked[msg.sender] = false;
+        userStakeDuration[msg.sender] = 0;
+
         totalStakedTokens -= stakedAmount;
 
         emit Unstaked(msg.sender, stakedAmount);
@@ -99,6 +101,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         require(reward > 0, "No reward available");
         
         userRewards[msg.sender] = 0;
+
         totalUsersRewards -= reward;
 
         emit RewardsClaimed(msg.sender, reward);
@@ -233,7 +236,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
     function isSubscriptionOrStakingActive() public view returns (bool) {
         return (block.timestamp < (userStakeDate[msg.sender] + (userStakeDuration[msg.sender] 
-        // * 1 days // Comment For test purpose, to run stacking durations in seconds
+        // * 1 days // Comment For test purpose, to run stacking durations in secondsv
         ))); // Returns false if staking time has been exceeded and requires a new stake to continue subscription
     }
 }
