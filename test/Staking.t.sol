@@ -10,7 +10,7 @@ contract StackingContractTest is Test {
     Token stakingToken;
     StreamlivrStaking stakingContract;
 
-    uint256 constant INITIAL_SUPPLY = 1000000;
+    uint256 constant INITIAL_SUPPLY = 1000000 * 1**18;
 
     function setUp() public {
         // Deploy Reward and Staking Contracts to interact with the contract
@@ -20,7 +20,7 @@ contract StackingContractTest is Test {
         // Deploy the staking contract
         stakingContract = new StreamlivrStaking(address(stakingToken), address(rewardToken));
 
-        // Fund thee reward Pool
+        // Fund the reward Pool
         rewardToken.transfer(address(stakingContract), INITIAL_SUPPLY - 1000);
 
         // Approve the transfer of stacking tokens by the stacking contract
@@ -38,7 +38,7 @@ contract StackingContractTest is Test {
     }
 
     function test_tokenStaking() public {
-        uint256 amount =  100 ; // Calculating the decimals, 100 tokens staked
+        uint256 amount =  100 * 1**18; // Calculating the decimals, 100 tokens staked
 
         uint256 prevBal = stakingToken.balanceOf(address(this));
         uint256 prevContractBal = stakingToken.balanceOf(address(stakingContract));
@@ -53,7 +53,7 @@ contract StackingContractTest is Test {
     }
 
     function test_tokenUnstaking() public {
-        uint256 min_stake_amount = 10;
+        uint256 min_stake_amount = 10 * 1**18;
 
         stakingContract.stake(min_stake_amount, 30);
 
@@ -75,7 +75,7 @@ contract StackingContractTest is Test {
         uint256 prevRewardBal = rewardToken.balanceOf(address(this));
         uint256 prevContractRewardPool = rewardToken.balanceOf(address(stakingContract));
 
-        stakingContract.stake(100, 30);
+        stakingContract.stake(100 * 1**18, 30);
         skip(30 days);
         stakingContract.unstake();
 
@@ -88,7 +88,7 @@ contract StackingContractTest is Test {
     }
 
     function test_getStackedAmount() public {
-        uint256 amount = 1000;
+        uint256 amount = 1000 * 1**18;
         stakingContract.stake(amount, 30);
 
         uint256 stakedAmount = stakingContract.getStakedAmount();
@@ -97,7 +97,7 @@ contract StackingContractTest is Test {
     }
 
     function test_getRewardAmount() public {
-        uint256 amount = 1000;
+        uint256 amount = 1000 * 1**18; // 1000 tokens to decimal
         stakingContract.stake(amount, 30);
 
         skip(30 days);
@@ -108,8 +108,9 @@ contract StackingContractTest is Test {
     }
 
     function test_subscriptionIsExpired() public {
-        uint256 amount = 1000;
+        uint256 amount = 1000 * 1**18;
         stakingContract.stake(amount, 30);
+        assertEq(stakingContract.isSubscriptionOrStakingActive(), true, "Subscriptiob wasn't made or recorded");
 
         skip(30 days);
 
