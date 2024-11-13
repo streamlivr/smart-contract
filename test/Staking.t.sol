@@ -152,6 +152,11 @@ contract StackingContractTest is Test {
 
         stakingContract.updateRewardRates(rate30days, rate1yr, rate2yr);
 
-        // assertEq(stakingContract.getRewardRates(), rate30days);
+        (uint256 rewardRate30days, uint256 rewardRate1yr, uint256 rewardRate2yrs) = stakingContract.getRewardRates()
+
+        assertEq(rewardRate30days, rate30days, "The 30 days reward rate wasn't updated");
+        assertEq(rewardRate1yr, rate1yr, "The 1 year reward rate wasn't updated");
+        assertEq(rewardRate2yrs, rate2yr, "The 2 years reward rate wasn't updated");
+
     }
 }
