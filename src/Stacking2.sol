@@ -15,6 +15,8 @@ error RewardClaimingPaused();
 error LessThanMinStakeAmount();
 
 contract StreamlivrStaking is ReentrancyGuard, Ownable {
+    address constant penaltyWalletAddress = 0xd9Cad4552D89dAcAcA97Cbc843E39B13bA1F605a;
+
     IERC20 immutable stakingToken;
     IERC20 immutable rewardToken;
 
@@ -25,7 +27,10 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     uint256 public rewardRateFor1yr = 2; // 40% for yearly staking
     uint256 public rewardRateFor2yr = 4; // 85% for two-year staking
 
-    uint256 constant MIN_STAKE_AMOUNT = 10 * 1**18; // 10 tokens, assuming 18 decimals
+    uint256 stakePenaltyPercentage = 50; // A 50% stake Penalty for early unstaking
+
+    uint256 constant MIN_STAKE_AMOUNT_MONTHLY = 10 * 1000000000000000000; // 10 tokens, assuming 18 decimals
+    uint256 constant MIN_STAKE_AMOUNT_ANUALLY = 100 * 1000000000000000000; // 10 tokens, assuming 18 decimals
 
     mapping(address => uint256) userStakedTokens;
     mapping(address => uint256) userStakeDate;
@@ -49,7 +54,9 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
     // ----------------- USER CORE ACTIONS ----------------------
     function stake(uint256 amount, uint256 durationInDays) external nonReentrant {
-        require(amount >= MIN_STAKE_AMOUNT, "Minimum stake amount not met");
+        if(durationInDays == 30) require(amount >= MIN_STAKE_AMOUNT_MONTHLY, "Minimum stake amount not met");
+        else  require(amount >= MIN_STAKE_AMOUNT_ANUALLY, "Minimum stake amount not met");
+
         require(!userTokenIsStaked[msg.sender], "Already staking");
 
         uint256 rewardRate = getRewardRate(durationInDays);
@@ -74,22 +81,31 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     // Handle StakingPenalty which is dedution of staked amount to company's wallet and no claim rewards
     function unstake() external nonReentrant canUnstake {
         require(userTokenIsStaked[msg.sender], "No tokens staked");
-        require(
-            !isSubscriptionOrStakingActive(),
-            "Staking period not reached"
-        );
 
         uint256 stakedAmount = userStakedTokens[msg.sender];
         userStakedTokens[msg.sender] = 0;
         userRewardRate[msg.sender] = 0;
         userTokenIsStaked[msg.sender] = false;
-        userStakeDuration[msg.sender] = 0;
 
         totalStakedTokens -= stakedAmount;
 
         emit Unstaked(msg.sender, stakedAmount);
 
-        bool success = stakingToken.transfer(msg.sender, stakedAmount);
+        uint256 transferAmount;
+
+        if(isSubscriptionOrStakingActive()) {
+            transferAmount = ((stakedAmount * stakePenaltyPercentage) / 100);
+
+            bool penaltyTransferSuccess = stakingToken.transfer(penaltyWalletAddress,  (stakedAmount - transferAmount));
+            if(!penaltyTransferSuccess) revert TransferFailed();
+        }else {
+            transferAmount = stakedAmount;
+        }
+
+        userStakeDuration[msg.sender] = 0;
+        userStakeDate[msg.sender] = 0;
+
+        bool success = stakingToken.transfer(msg.sender, transferAmount);
         if (!success) revert TransferFailed();
     }
 
@@ -108,6 +124,10 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
         bool success = rewardToken.transfer(msg.sender, reward);
         if (!success) revert TransferFailed();
+    }
+
+    function getRewardRates() external view returns(uint256 reward30days, uint256 reward1yr, uint256 reward2yr) {
+        return(rewardRateFor30days, rewardRateFor1yr, rewardRateFor2yr);
     }
 
     // function switchPlan(uint256 newDurationInDays) external nonReentrant {
@@ -148,14 +168,15 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         if (!success) revert TransferFailed();
     }
 
+    function emptyRewardPool() external onlyOwner {
+        bool success = rewardToken.transfer(penaltyWalletAddress, getRewardPoolBalance());
+        if(!success) revert TransferFailed();
+    }
+
     function updateRewardRates(uint256 _30days, uint256 _1yr, uint256 _2yrs) external onlyOwner {
         rewardRateFor30days = _30days;
         rewardRateFor1yr = _1yr;
         rewardRateFor2yr = _2yrs;
-    }
-
-    function getRewardRates() external view onlyOwner returns(uint256 reward30days, uint256 reward1yr, uint256 reward2yr) {
-        return(rewardRateFor30days, rewardRateFor1yr, rewardRateFor2yr);
     }
 
     function setWithdrawalStatus(bool _value) external onlyOwner {
@@ -174,7 +195,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         return rewardClaimPaused;
     }
 
-    function getRewardPoolBalance() external view onlyOwner returns (uint256) {
+    function getRewardPoolBalance() public view onlyOwner returns (uint256) {
         if(address(stakingToken) == address(rewardToken)) {
             return (rewardToken.balanceOf(address(this)) - totalStakedTokens);
         }else {
@@ -236,7 +257,12 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
     function isSubscriptionOrStakingActive() public view returns (bool) {
         return (block.timestamp < (userStakeDate[msg.sender] + (userStakeDuration[msg.sender] 
-        // * 1 days // Comment For test purpose, to run stacking durations in secondsv
+        * 1 days // Comment For test purpose, to run stacking durations in secondsv
         ))); // Returns false if staking time has been exceeded and requires a new stake to continue subscription
+
+        // return true;
     }
 }
+
+
+// 000000000000000000
