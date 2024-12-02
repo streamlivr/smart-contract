@@ -84,7 +84,6 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
         uint256 stakedAmount = userStakedTokens[msg.sender];
         userStakedTokens[msg.sender] = 0;
-        userRewardRate[msg.sender] = 0;
         userTokenIsStaked[msg.sender] = false;
 
         totalStakedTokens -= stakedAmount;
@@ -98,10 +97,15 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
             bool penaltyTransferSuccess = stakingToken.transfer(penaltyWalletAddress,  (stakedAmount - transferAmount));
             if(!penaltyTransferSuccess) revert TransferFailed();
+
+            uint256 prevReward = userRewards[msg.sender];
+
+            userRewards[msg.sender] = prevReward - calculateReward(stakedAmount, userRewardRate[msg.sender]);
         }else {
             transferAmount = stakedAmount;
         }
 
+        userRewardRate[msg.sender] = 0;
         userStakeDuration[msg.sender] = 0;
         userStakeDate[msg.sender] = 0;
 
@@ -263,6 +267,3 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         // return true;
     }
 }
-
-
-// 000000000000000000
