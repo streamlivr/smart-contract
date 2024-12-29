@@ -10,7 +10,7 @@ contract StackingContractTest is Test {
     Token stakingToken;
     StreamlivrStaking stakingContract;
 
-    uint256 constant INITIAL_SUPPLY = 1000000 * 1000000000000000000;
+    uint256 constant INITIAL_SUPPLY = 1000000 * 1000000000000000000; // A million tokens formatted to ethers
 
     function setUp() public {
         // Deploy Reward and Staking Contracts to interact with the contract
@@ -23,8 +23,8 @@ contract StackingContractTest is Test {
         // Fund the reward Pool
         rewardToken.transfer(address(stakingContract), INITIAL_SUPPLY - 1000);
 
-        // Approve the transfer of stacking tokens by the stacking contract
-        stakingToken.approve(address(stakingContract), INITIAL_SUPPLY);
+        // Transfer stacking tokens to this test contract to use for staking actions by the stacking contract
+        stakingToken.transfer(address(this), INITIAL_SUPPLY);
     }
 
     function test_RewardPoolBalance() public {
@@ -32,17 +32,23 @@ contract StackingContractTest is Test {
         assertEq(INITIAL_SUPPLY - 1000, bal);
     }
 
-    function test_stakingAllowance() public {
-        uint256 allowance = stakingToken.allowance(address(this), address(stakingContract));
-        assertEq(allowance, INITIAL_SUPPLY);
+    function test_TestCobntractStakingTokenBalance() public {
+        uint256 balance = stakingToken.balanceOf(address(this));
+        assertEq(balance, INITIAL_SUPPLY);
     }
 
     function test_tokenStaking() public {
-        uint256 amount =  100 * 1000000000000000000; // Calculating the decimals, 100 tokens staked
+        uint256 amount =  10 * 1000000000000000000; // Calculating the decimals in ethers, 10 tokens to stake
 
+        // Get the new Balance before staking action proceed
         uint256 prevBal = stakingToken.balanceOf(address(this));
         uint256 prevContractBal = stakingToken.balanceOf(address(stakingContract));
+
+        // Approve this contract staking tokens spending by the test staking contract 
+        stakingToken.approve(address(stakingContract), amount);
         stakingContract.stake(amount, 30);
+
+        // Get the new Balance after staking action has been completed
         uint256 newBal = stakingToken.balanceOf(address(this));
         uint256 newContractBalance = stakingToken.balanceOf(address(stakingContract));
 
@@ -53,30 +59,17 @@ contract StackingContractTest is Test {
     }
 
     function test_minimumStakingAmountError() public {
-        uint256 amount =  10 * 1**17; // Calculating the decimals, 100 tokens staked
+        uint256 amount =  9.9 * 1000000000000000000; // Calculating the decimals, 100 tokens staked
 
         vm.expectRevert();
+        // Test staking 9.9 tokens for 30 days when min stake amount for 30 days is 10 tokens
         stakingContract.stake(amount, 30);
-    }
-
-    function test_unstakingBeforeDueDatePenalty() public {
-        uint256 amount =  10 * 1000000000000000000; // Calculating the decimals, 100 tokens staked
-        
-        uint256 userBalanceBeforeStaking = stakingToken.balanceOf(address(this));
-
-        stakingContract.stake(amount, 30);
-
-        stakingContract.unstake();
-        uint256 userBalanceAfterUnstaking = stakingToken.balanceOf(address(this));
-
-        uint256 expectedBalanceAfterUnstaking = (userBalanceBeforeStaking - (5 * 1000000000000000000));
-
-        assertEq(userBalanceAfterUnstaking, expectedBalanceAfterUnstaking, "User wasn't penalized");
     }
 
     function test_tokenUnstaking() public {
         uint256 min_stake_amount = 10 * 1000000000000000000;
 
+        stakingToken.approve(address(stakingContract), min_stake_amount);
         stakingContract.stake(min_stake_amount, 30);
 
         uint256 prevBal = stakingToken.balanceOf(address(this));
@@ -93,12 +86,52 @@ contract StackingContractTest is Test {
         assertEq(prevContractBal - min_stake_amount, newContractBal, "Staked Tokens not deducted from contract");
     }
 
+    function test_ustakingErrorWhenNoTokenIsStaked() public {
+        uint256 amountStaked = stakingContract.getStakedAmount();
+        if(amountStaked != 0) {
+            stakingContract.unstake();
+        } 
+
+        vm.expectRevert();
+        stakingContract.unstake();
+    }
+
+    function test_unstakingBeforeDueDatePenalty() public {
+        uint256 amount =  10 * 1000000000000000000; // Calculating the decimals, 10 tokens staked
+        
+        uint256 userBalanceBeforeStaking = stakingToken.balanceOf(address(this));
+
+        stakingToken.approve(address(stakingContract), amount);
+        stakingContract.stake(amount, 30);
+
+        stakingContract.unstake();
+
+        uint256 userBalanceAfterUnstaking = stakingToken.balanceOf(address(this));
+        uint256 expectedBalanceAfterUnstaking = (userBalanceBeforeStaking - ((amount * 50)/100)); // 50% penalty
+
+        assertEq(userBalanceAfterUnstaking, expectedBalanceAfterUnstaking, "User wasn't penalized");
+    }
+
+    // function test_rewardClaimingWhenTheClaimingActionHasBeenPausedByTheAdmin() public {
+    //     stakingContract.setRewardClaimStatus(false);
+
+    //     // Returns true when rewardClaimingActions is Paused;
+    //     if(stakingContract.getRewardClaimStatus()) {
+            
+    //     }
+    // }
+
     function test_rewardClaiming() public {
         uint256 prevRewardBal = rewardToken.balanceOf(address(this));
         uint256 prevContractRewardPool = rewardToken.balanceOf(address(stakingContract));
 
-        stakingContract.stake(100 * 1000000000000000000, 30);
+        uint256 amount = 10 * 1000000000000000000;
+
+        stakingToken.approve(address(stakingContract), amount);
+        stakingContract.stake(amount, 30);
+
         skip(30 days);
+
         stakingContract.unstake();
 
         stakingContract.claimReward();
@@ -111,6 +144,8 @@ contract StackingContractTest is Test {
 
     function test_getStackedAmount() public {
         uint256 amount = 1000 * 1000000000000000000;
+        
+        stakingToken.approve(address(stakingContract), amount);
         stakingContract.stake(amount, 30);
 
         uint256 stakedAmount = stakingContract.getStakedAmount();
@@ -120,17 +155,14 @@ contract StackingContractTest is Test {
 
     function test_getRewardAmount() public {
         uint256 amount = 1000 * 1000000000000000000; // 1000 tokens to decimal
+        stakingToken.approve(address(stakingContract), amount);
         stakingContract.stake(amount, 30);
-
-        skip(30 days);
-
-        stakingContract.unstake();
-
-        assertEq(stakingContract.getRewardAmount(), ((amount * 2) / 100), "Incorrect Reward recieved");
+        assertEq(stakingContract.getRewardAmount(), ((amount * 2) / 100), "Incorrect Reward calculated by contract");
     }
 
     function test_subscriptionIsExpired() public {
         uint256 amount = 1000 * 1000000000000000000;
+        stakingToken.approve(address(stakingContract), amount);
         stakingContract.stake(amount, 30);
         assertEq(stakingContract.isSubscriptionOrStakingActive(), true, "Subscriptiob wasn't made or recorded");
 
