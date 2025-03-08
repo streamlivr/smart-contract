@@ -10,3 +10,6 @@
 [submodule "lib/foundry-chainlink-toolkit"]
 	path = lib/foundry-chainlink-toolkit
 	url = https://github.com/smartcontractkit/foundry-chainlink-toolkit
+[submodule "lib/interop-lib"]
+	path = lib/interop-lib
+	url = https://github.com/ethereum-optimism/interop-lib
