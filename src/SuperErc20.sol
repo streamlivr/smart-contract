@@ -12,7 +12,9 @@ contract LivrSuper is ERC20, Ownable, IERC7802 {
   error LivrToken_NotZeroAddress();
   error LivrToken_NotAuthorized();
 
-  constructor(address _owner) ERC20("Streamlivr", "LIVR") Ownable(_owner)  {}
+  constructor(address _owner, uint256 initialSupply) ERC20("Streamlivr", "LIVR") Ownable(_owner)  {
+    _mint(_owner, initialSupply);
+  }
 
   function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
     if (_to == address(0)) {

@@ -17,7 +17,7 @@ contract DeploySuper is Script {
     vm.startBroadcast();
 
     bytes memory initCode = abi.encodePacked(
-      type(LivrSuper).creationCode, abi.encode(0x68E6971E91851C24011b7FaD98D38541D90Be0a9)
+      type(LivrSuper).creationCode, abi.encode(0x68E6971E91851C24011b7FaD98D38541D90Be0a9, 500000000000000000000000000)
     );
 
     emit logByte(initCode);
@@ -29,7 +29,7 @@ contract DeploySuper is Script {
     emit log(preComputedAddress);
 
     address addr;
-    addr = address(new LivrSuper{salt: _implSalt()}(0x68E6971E91851C24011b7FaD98D38541D90Be0a9));
+    addr = address(new LivrSuper{salt: _implSalt()}(0x68E6971E91851C24011b7FaD98D38541D90Be0a9, 500000000000000000000000000));
     // assembly {
     //   addr :=
     //     create2(
