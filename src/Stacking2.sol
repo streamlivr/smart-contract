@@ -15,7 +15,7 @@ error RewardClaimingPaused();
 // error LessThanMinStakeAmount();
 
 contract StreamlivrStaking is ReentrancyGuard, Ownable {
-    address constant penaltyWalletAddress = 0xd9Cad4552D89dAcAcA97Cbc843E39B13bA1F605a; // Official streamlivr development wallet address for penalties
+    address constant penaltyWalletAddress = 0xd9Cad4552D89dAcAcA97Cbc843E39B13bA1F605a;
 
     IERC20 immutable stakingToken;
     IERC20 immutable rewardToken;
@@ -23,9 +23,9 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     uint256 totalStakedTokens;
     uint256 totalUsersRewards;
     
-    uint256 public rewardRateFor30days = 2; // 2% for monthly staking
-    uint256 public rewardRateFor1yr = 2; // 2% for yearly staking
-    uint256 public rewardRateFor2yr = 4; // 4% for two-year staking
+    uint256 public rewardRateFor30days = 2; // 3% for monthly staking
+    uint256 public rewardRateFor1yr = 2; // 40% for yearly staking
+    uint256 public rewardRateFor2yr = 4; // 85% for two-year staking
 
     uint256 stakePenaltyPercentage = 50; // A 50% stake Penalty for early unstaking
 
@@ -55,10 +55,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
     // ----------------- USER CORE ACTIONS ----------------------
     function stake(uint256 amount, uint256 durationInDays) external nonReentrant {
         if(durationInDays == 30) require(amount >= MIN_STAKE_AMOUNT_MONTHLY, "Minimum stake amount not met");
-        else if(durationInDays == 365)  require(amount >= MIN_STAKE_AMOUNT_ANUALLY, "Minimum stake amount not met");
-        else {
-            revert InvalidStakingDuration();
-        }
+        else  require(amount >= MIN_STAKE_AMOUNT_ANUALLY, "Minimum stake amount not met");
 
         require(!userTokenIsStaked[msg.sender], "Already staking");
 
@@ -81,6 +78,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
         if (!success) revert TransferFailed();
     }
 
+    // Handle StakingPenalty which is dedution of staked amount to company's wallet and no claim rewards
     function unstake() external nonReentrant canUnstake {
         require(userTokenIsStaked[msg.sender], "No tokens staked");
 
@@ -263,7 +261,7 @@ contract StreamlivrStaking is ReentrancyGuard, Ownable {
 
     function isSubscriptionOrStakingActive() public view returns (bool) {
         return (block.timestamp < (userStakeDate[msg.sender] + (userStakeDuration[msg.sender] 
-        * 1 days // Comment For test purpose, to run stacking durations in seconds duration
+        * 1 days // Comment For test purpose, to run stacking durations in secondsv
         ))); // Returns false if staking time has been exceeded and requires a new stake to continue subscription
 
         // return true;
